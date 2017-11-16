@@ -284,6 +284,31 @@ public final class AttachmentUtil {
         return id;
     }
     
+    static String getHeaderValue(List<String> v) {
+        if (v != null && !v.isEmpty()) {
+            return v.get(0);
+        }
+        return null;
+    }
+    static String getHeaderValue(List<String> v, String delim) {
+        if (v != null && !v.isEmpty()) {
+            StringBuilder b = new StringBuilder();
+            for (String s : v) {
+                if (b.length() > 0) {
+                    b.append(delim);
+                }
+                b.append(s);
+            }
+            return b.toString();
+        }
+        return null;
+    }
+    static String getHeader(Map<String, List<String>> headers, String h) {
+        return getHeaderValue(headers.get(h));
+    }
+    static String getHeader(Map<String, List<String>> headers, String h, String delim) {
+        return getHeaderValue(headers.get(h), delim);
+    }
     
     public static Attachment createAttachment(InputStream stream, InternetHeaders headers) 
         throws IOException {
@@ -342,6 +367,26 @@ public final class AttachmentUtil {
         }
         
         return att;
+    }
+
+    public static InputStream decode(InputStream in, String encoding) throws IOException {
+        if (encoding == null) {
+            return in;
+        }
+        encoding = encoding.toLowerCase();
+
+        // some encodings are just pass-throughs, with no real decoding.
+        if ("binary".equals(encoding)
+            || "7bit".equals(encoding)
+            || "8bit".equals(encoding)) {
+            return in;
+        } else if ("base64".equals(encoding)) {
+            return new Base64DecoderStream(in);
+        } else if ("quoted-printable".equals(encoding)) {
+            return new QuotedPrintableDecoderStream(in);
+        } else {
+            throw new IOException("Unknown encoding " + encoding);
+        }
     }
     
     public static boolean isTypeSupported(String contentType, List<String> types) {
